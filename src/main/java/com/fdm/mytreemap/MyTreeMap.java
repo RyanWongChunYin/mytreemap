@@ -5,46 +5,21 @@ import java.util.List;
 import java.util.TreeMap;
 
 public class MyTreeMap<K extends Comparable<K>, V> {
-	/*
-	 * at most one null
-	 * 
-	 * 
-	 * http://algs4.cs.princeton.edu/33balanced/RedBlackBST.java.html 1) Every
-	 * node has a color either red or black.
-	 * 
-	 * 2) Root of tree is always black.
-	 * 
-	 * 3) There are no two adjacent red nodes (A red node cannot have a red
-	 * parent or red child).
-	 * 
-	 * 4) Every path from root to a NULL node has same number of black nodes.
-	 */
-
-	// TODO: put remove size
-
-	private int height;
-	private int size;
 	private Node<K, V> root;
-
 	public MyTreeMap() {
-		TreeMap tm = new TreeMap();
-
 	}
-
 	private int size(Node<K, V> x) {
 		if (x == null)
 			return 0;
 		return x.size;
 	}
-
 	private boolean isRed(Node<K, V> node) {
 		// check is node red, if node is null return false
 		if (node == null) {
 			return false;
 		}
-		return node.color == false ? true : false;
+		return node.color == true;
 	}
-
 	/*
 	 * Public method for checking the Tree status
 	 */
@@ -90,8 +65,26 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		root.color = false; // set the root color to black
 	}
 
-	private Node<K, V> put(Node<K, V> tempRoot, K key, V Value) {
-
+	private Node<K, V> put(Node<K, V> tempRoot, K key, V value) {
+		if(tempRoot == null){return new Node<K,V>(key,value,true,1);}
+        int cmp = key.compareTo(tempRoot.key);
+        // recursive search
+        if      (cmp < 0) {tempRoot.leftChild  = put(tempRoot.leftChild,  key, value); }
+        else if (cmp > 0) {tempRoot.rightChild = put(tempRoot.rightChild, key, value); }
+        else {tempRoot.value   = value; }// update the value if key is existed
+        
+        // Check and fix the rule of RB tree:
+        if (isRed(tempRoot.rightChild) && !isRed(tempRoot.leftChild)){
+        	tempRoot = rotateLeft(tempRoot);
+        }
+        if (isRed(tempRoot.leftChild)  &&  isRed(tempRoot.leftChild.leftChild)){
+        	tempRoot = rotateRight(tempRoot);
+        }
+        if (isRed(tempRoot.leftChild)  &&  isRed(tempRoot.rightChild)) {
+        	flipColors(tempRoot);
+        }
+        // assign size
+        tempRoot.size = size(tempRoot.leftChild) + size(tempRoot.rightChild) + 1;
 		return tempRoot;
 	}
 
@@ -107,6 +100,23 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		nextRoot.size = node.size;
 		node.size = size(node.leftChild) + size(node.rightChild) + 1;
 		return nextRoot;
+	}
+	private Node<K,V> rotateLeft(Node<K,V> node){
+		Node<K,V> nextRoot = node.rightChild;
+		node.rightChild = nextRoot.leftChild;
+		nextRoot.leftChild = node;
+		// change color and update size
+		nextRoot.color = nextRoot.leftChild.color;
+		nextRoot.leftChild.color = true;
+		nextRoot.size = node.size;
+		node.size = size(node.leftChild) + size(node.rightChild) + 1;
+		return nextRoot;
+	}
+	private void flipColors(Node<K,V> node){
+		//Flip node color and children's to opposite color
+		node.color = !node.color;
+		node.leftChild.color = !node.leftChild.color;
+		node.rightChild.color = !node.rightChild.color;
 	}
 
 	/*
@@ -176,4 +186,7 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		}
 
 	}
+
+
+	
 }
