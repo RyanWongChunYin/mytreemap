@@ -6,13 +6,38 @@ import java.util.TreeMap;
 
 public class MyTreeMap<K extends Comparable<K>, V> {
 	private Node<K, V> root;
+	private StringBuffer sb;
+
+	@Override
+	public String toString() {
+		sb = new StringBuffer();
+		toString(root);
+		if (root.leftChild != null)
+			System.out.println("left tree" + root.leftChild.size);
+		if (root.rightChild != null)
+			System.out.println("right tree" + root.rightChild.size);
+		return "{" + sb.toString().subSequence(0, sb.toString().length() - 2) + "}";
+	}
+
+	private void toString(MyTreeMap<K, V>.Node<K, V> tempRoot) {
+		if (tempRoot != null) {
+			toString(tempRoot.leftChild);
+			sb.append(tempRoot.key + "=" + tempRoot.value + tempRoot.color);
+			sb.append(", ");
+			toString(tempRoot.rightChild);
+		}
+
+	}
+
 	public MyTreeMap() {
 	}
+
 	private int size(Node<K, V> x) {
 		if (x == null)
 			return 0;
 		return x.size;
 	}
+
 	private boolean isRed(Node<K, V> node) {
 		// check is node red, if node is null return false
 		if (node == null) {
@@ -20,6 +45,7 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		}
 		return node.color == true;
 	}
+
 	/*
 	 * Public method for checking the Tree status
 	 */
@@ -62,30 +88,105 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 	 */
 	public void put(K key, V value) {
 		root = put(root, key, value);
+		setNodeParent(root);
 		root.color = false; // set the root color to black
 	}
 
+	private void setNodeParent(MyTreeMap<K, V>.Node<K, V> tempRoot) {
+		if (tempRoot.leftChild != null) {
+			tempRoot.addleftChild(tempRoot.leftChild);
+			setNodeParent(tempRoot.leftChild);
+		}
+		if (tempRoot.rightChild != null) {
+			tempRoot.addrightChild(tempRoot.rightChild);
+			setNodeParent(tempRoot.rightChild);
+		}
+	}
+
 	private Node<K, V> put(Node<K, V> tempRoot, K key, V value) {
-		if(tempRoot == null){return new Node<K,V>(key,value,true,1);}
-        int cmp = key.compareTo(tempRoot.key);
-        // recursive search
-        if      (cmp < 0) {tempRoot.leftChild  = put(tempRoot.leftChild,  key, value); }
-        else if (cmp > 0) {tempRoot.rightChild = put(tempRoot.rightChild, key, value); }
-        else {tempRoot.value   = value; }// update the value if key is existed
-        
-        // Check and fix the rule of RB tree:
-        if (isRed(tempRoot.rightChild) && !isRed(tempRoot.leftChild)){
-        	tempRoot = rotateLeft(tempRoot);
-        }
-        if (isRed(tempRoot.leftChild)  &&  isRed(tempRoot.leftChild.leftChild)){
-        	tempRoot = rotateRight(tempRoot);
-        }
-        if (isRed(tempRoot.leftChild)  &&  isRed(tempRoot.rightChild)) {
-        	flipColors(tempRoot);
-        }
-        // assign size
-        tempRoot.size = size(tempRoot.leftChild) + size(tempRoot.rightChild) + 1;
+
+		if (tempRoot == null) {
+			return new Node<K, V>(key, value, true, 1);
+		}
+
+		int cmp = key.compareTo(tempRoot.key);
+		// recursive search
+		if (cmp < 0) {
+			tempRoot.leftChild = put(tempRoot.leftChild, key, value);
+			tempRoot.leftChild.parent = tempRoot;
+			validate(tempRoot);
+		} else if (cmp > 0) {
+			tempRoot.rightChild = put(tempRoot.rightChild, key, value);
+			tempRoot.rightChild.parent = tempRoot;
+			validate(tempRoot);
+		} else {
+			tempRoot.value = value; // update the value if key is existed
+		}
+		setNodeParent(tempRoot);
+		// if (tempRoot.leftChild != null) {
+		// if ((isRed(tempRoot.leftChild.leftChild) && isRed(tempRoot.leftChild)
+		// == true)
+		// && !isRed(tempRoot.rightChild)) {
+		// tempRoot = rotateRight(tempRoot);
+		// }
+		// }
+		// if(isRed(tempRoot.leftChild)&&isRed(tempRoot.rightChild)){
+		// flipColors(tempRoot);
+		// }
+		// Check and fix the rule of RB tree:
+		// if (isRed(tempRoot.rightChild) && !isRed(tempRoot.leftChild)) {
+		//
+		// tempRoot = rotateLeft(tempRoot);
+		// }
+		// if (isRed(tempRoot.leftChild) && isRed(tempRoot.leftChild.leftChild))
+		// {
+		// tempRoot = rotateRight(tempRoot);
+		// }
+		// if (isRed(tempRoot.leftChild) && isRed(tempRoot.rightChild)) {
+		// flipColors(tempRoot);
+		// }
+		// assign size
+		tempRoot.size = size(tempRoot.leftChild) + size(tempRoot.rightChild) + 1;
+
 		return tempRoot;
+	}
+
+	private void validate(MyTreeMap<K, V>.Node<K, V> tempRoot) {
+		// if tempRoot has parent --> has uncle
+		if (tempRoot.parent != null) {
+
+			// if right unlce is black
+			if (isRed(tempRoot.parent.leftChild) && !isRed(tempRoot.parent.rightChild)) {
+				if (tempRoot.rightChild != null && isRed(tempRoot.rightChild)) {
+					tempRoot = rotateLeft(tempRoot);
+					tempRoot.parent = tempRoot.leftChild.parent;
+					tempRoot.leftChild.parent = tempRoot;
+					tempRoot.parent.leftChild = tempRoot;
+
+				}
+				tempRoot = rotateRight(tempRoot.parent);
+				tempRoot.parent = tempRoot.rightChild.parent;
+				if (tempRoot.parent == null)
+					root = tempRoot;
+				tempRoot.rightChild.parent = tempRoot;
+				System.out.println(tempRoot.key);
+			}
+			// if left uncle is black
+			else if (!isRed(tempRoot.parent.leftChild) && isRed(tempRoot.parent.rightChild)) {
+				if (tempRoot.leftChild != null && isRed(tempRoot.leftChild)) {
+					tempRoot = rotateRight(tempRoot);
+				}
+				tempRoot = rotateLeft(tempRoot.parent);
+
+			}
+			// if uncle is also red
+			
+			if (tempRoot.parent!=null&&isRed(tempRoot.parent.leftChild) && isRed(tempRoot.parent.rightChild)) {
+				flipColors(tempRoot.parent);
+			}
+
+		}
+
 	}
 
 	/*
@@ -95,14 +196,16 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		Node<K, V> nextRoot = node.leftChild;
 		node.leftChild = nextRoot.rightChild;
 		nextRoot.rightChild = node;
+		// change color and update size
 		nextRoot.color = nextRoot.leftChild.color;
 		nextRoot.leftChild.color = true;
 		nextRoot.size = node.size;
 		node.size = size(node.leftChild) + size(node.rightChild) + 1;
 		return nextRoot;
 	}
-	private Node<K,V> rotateLeft(Node<K,V> node){
-		Node<K,V> nextRoot = node.rightChild;
+
+	private Node<K, V> rotateLeft(Node<K, V> node) {
+		Node<K, V> nextRoot = node.rightChild;
 		node.rightChild = nextRoot.leftChild;
 		nextRoot.leftChild = node;
 		// change color and update size
@@ -112,8 +215,9 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		node.size = size(node.leftChild) + size(node.rightChild) + 1;
 		return nextRoot;
 	}
-	private void flipColors(Node<K,V> node){
-		//Flip node color and children's to opposite color
+
+	private void flipColors(Node<K, V> node) {
+		// Flip node color and children's to opposite color
 		node.color = !node.color;
 		node.leftChild.color = !node.leftChild.color;
 		node.rightChild.color = !node.rightChild.color;
@@ -147,6 +251,14 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 			this.size = size;
 		}
 
+		Node(K key, V value, Node<K, V> parent, boolean color, int size) {
+			this.key = key;
+			this.value = value;
+			this.parent = parent;
+			this.color = color;
+			this.size = size;
+		}
+
 		Node(K key, V value, Node<K, V> parent) {
 			this.key = key;
 			this.value = value;
@@ -159,6 +271,10 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 
 		Node<K, V> getRightChild() {
 			return rightChild;
+		}
+
+		Node<K, V> getParent() {
+			return parent;
 		}
 
 		// Can only parent node add child node; cannot child node set parent
@@ -187,6 +303,4 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 
 	}
 
-
-	
 }
