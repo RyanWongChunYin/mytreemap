@@ -50,7 +50,7 @@ public class MyTreeMapTest {
 		prebuild.put(3, "two");
 		prebuild.put(1, "one");
 		prebuild.put(2, "two");
-		prebuild.put(4, "two");
+//		prebuild.put(4, "two");
 		myTree.put(3, "two");
 		myTree.put(1, "one");
 		myTree.put(2, "two");

@@ -22,7 +22,7 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 	private void toString(MyTreeMap<K, V>.Node<K, V> tempRoot) {
 		if (tempRoot != null) {
 			toString(tempRoot.leftChild);
-			sb.append(tempRoot.key + "=" + tempRoot.value + tempRoot.color);
+			sb.append(tempRoot.key + "=" + tempRoot.value);
 			sb.append(", ");
 			toString(tempRoot.rightChild);
 		}
@@ -87,6 +87,7 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 	 * Tree Insertion
 	 */
 	public void put(K key, V value) {
+		System.out.println("putting..." + key);
 		root = put(root, key, value);
 		setNodeParent(root);
 		root.color = false; // set the root color to black
@@ -104,7 +105,8 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 	}
 
 	private Node<K, V> put(Node<K, V> tempRoot, K key, V value) {
-
+		
+		Node<K, V> retNode = null;
 		if (tempRoot == null) {
 			return new Node<K, V>(key, value, true, 1);
 		}
@@ -112,52 +114,36 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		int cmp = key.compareTo(tempRoot.key);
 		// recursive search
 		if (cmp < 0) {
-			tempRoot.leftChild = put(tempRoot.leftChild, key, value);
+			retNode = put(tempRoot.leftChild, key, value);
+			System.out.println(retNode.key + " return node");
+
+			tempRoot.leftChild = retNode;
 			tempRoot.leftChild.parent = tempRoot;
-			validate(tempRoot);
+
 		} else if (cmp > 0) {
 			tempRoot.rightChild = put(tempRoot.rightChild, key, value);
 			tempRoot.rightChild.parent = tempRoot;
-			validate(tempRoot);
+
 		} else {
 			tempRoot.value = value; // update the value if key is existed
 		}
-		setNodeParent(tempRoot);
-		// if (tempRoot.leftChild != null) {
-		// if ((isRed(tempRoot.leftChild.leftChild) && isRed(tempRoot.leftChild)
-		// == true)
-		// && !isRed(tempRoot.rightChild)) {
-		// tempRoot = rotateRight(tempRoot);
-		// }
-		// }
-		// if(isRed(tempRoot.leftChild)&&isRed(tempRoot.rightChild)){
-		// flipColors(tempRoot);
-		// }
-		// Check and fix the rule of RB tree:
-		// if (isRed(tempRoot.rightChild) && !isRed(tempRoot.leftChild)) {
-		//
-		// tempRoot = rotateLeft(tempRoot);
-		// }
-		// if (isRed(tempRoot.leftChild) && isRed(tempRoot.leftChild.leftChild))
-		// {
-		// tempRoot = rotateRight(tempRoot);
-		// }
-		// if (isRed(tempRoot.leftChild) && isRed(tempRoot.rightChild)) {
-		// flipColors(tempRoot);
-		// }
+		System.out.println("NODE will enter validate"+tempRoot.key);
+		tempRoot = validate(tempRoot);
+		System.out.println("after valid, temp = " + tempRoot.key);
 		// assign size
 		tempRoot.size = size(tempRoot.leftChild) + size(tempRoot.rightChild) + 1;
 
 		return tempRoot;
 	}
 
-	private void validate(MyTreeMap<K, V>.Node<K, V> tempRoot) {
+	private Node<K, V> validate(MyTreeMap<K, V>.Node<K, V> tempRoot) {
 		// if tempRoot has parent --> has uncle
 		if (tempRoot.parent != null) {
 
 			// if right unlce is black
 			if (isRed(tempRoot.parent.leftChild) && !isRed(tempRoot.parent.rightChild)) {
 				if (tempRoot.rightChild != null && isRed(tempRoot.rightChild)) {
+					System.out.println("rotating");
 					tempRoot = rotateLeft(tempRoot);
 					tempRoot.parent = tempRoot.leftChild.parent;
 					tempRoot.leftChild.parent = tempRoot;
@@ -166,13 +152,14 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 				}
 				tempRoot = rotateRight(tempRoot.parent);
 				tempRoot.parent = tempRoot.rightChild.parent;
-				if (tempRoot.parent == null)
-					root = tempRoot;
+				if (tempRoot.parent == null) root = tempRoot;
 				tempRoot.rightChild.parent = tempRoot;
-				System.out.println(tempRoot.key);
+				System.out.println("after rot, temp = "+tempRoot.key);
+				
 			}
 			// if left uncle is black
 			else if (!isRed(tempRoot.parent.leftChild) && isRed(tempRoot.parent.rightChild)) {
+
 				if (tempRoot.leftChild != null && isRed(tempRoot.leftChild)) {
 					tempRoot = rotateRight(tempRoot);
 				}
@@ -180,13 +167,14 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 
 			}
 			// if uncle is also red
-			
-			if (tempRoot.parent!=null&&isRed(tempRoot.parent.leftChild) && isRed(tempRoot.parent.rightChild)) {
+
+			if (tempRoot.parent != null && isRed(tempRoot.parent.leftChild) && isRed(tempRoot.parent.rightChild)) {
+
 				flipColors(tempRoot.parent);
 			}
 
 		}
-
+		return tempRoot;
 	}
 
 	/*
