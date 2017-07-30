@@ -78,7 +78,7 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		}
 		return null;
 	}
-
+	
 	public boolean contains(K key) {
 		return get(key) != null;
 	}
@@ -185,7 +185,7 @@ public class MyTreeMap<K extends Comparable<K>, V> {
 		node.leftChild = nextRoot.rightChild;
 		nextRoot.rightChild = node;
 		// change color and update size
-		nextRoot.color = nextRoot.leftChild.color;
+		nextRoot.color = nextRoot.rightChild.color;
 		nextRoot.leftChild.color = true;
 		nextRoot.size = node.size;
 		node.size = size(node.leftChild) + size(node.rightChild) + 1;
